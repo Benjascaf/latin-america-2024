@@ -1,0 +1,31 @@
+[
+    {
+        "category": "binary",
+        "id": "matrix_mul_x86",
+        "description": "My local matrix multiply",
+        "architecture": "X86",
+        "tags": [],
+        "source": "",
+        "url": "file:///workspaces/latin-america-2024/exercises/01-Introduction/01-introduction/custom_benchmarks_01/workload",
+        "license": "la mia",
+        "author": "BS",
+        "resource_version": "1.0.0",
+        "gem5_versions": "24.0"
+    },
+    {
+        "category": "workload",
+        "id": "matrix_mul_x86_run",
+        "function": "set_se_binary_workload",
+        "resources": {
+            "binary": {
+                "id": "matrix_mul_x86",
+                "resource_version": "1.0.0"
+            }
+
+        },
+        "resource_version": "1.0.0",
+        "gem5_versions": [
+            "24.0"
+        ]
+    }
+]
