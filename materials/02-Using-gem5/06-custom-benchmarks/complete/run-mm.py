@@ -82,3 +82,14 @@ simulator = Simulator(
     },
 )
 simulator.run()
+simSeconds                                   0.000125                       # Number of seconds simulated (Second)
+simTicks                                    125320221                       # Number of ticks simulated (Tick)
+finalTick                                 18310505166                       # Number of ticks from beginning of simulation (restored from checkpoints and never reset) (Tick)
+simFreq                                  1000000000000                       # The number of ticks per simulated second ((Tick/Second))
+hostSeconds                                      0.26                       # Real time elapsed on the host (Second)
+hostTickRate                                480417321                       # The number of ticks simulated per host second (ticks/s) ((Tick/Second))
+hostMemory                                   17060520                       # Number of bytes of host memory used (Byte)
+simInsts                                     29855413                       # Number of instructions simulated (Count)
+simOps                                       41265837                       # Number of ops (including micro ops) simulated (Count)
+hostInstRate                                114384173                       # Simulator instruction rate (inst/s) ((Count/Second))
+hostOpRate                          

@@ -19,10 +19,23 @@ from m5.objects import (
     BadAddr,
     Cache,
     L2XBar,
+    Port,
     SystemXBar,
     SubSystem,
 )
 
+class L3Cache(Cache):
+    def __init__(self, size, associativity):
+        super.__init__(self, size=size, associativity=associativity)
+        self.size = size
+        self.assoc = associativity
+        self.tag_latency = 20
+        self.data_latency = 20
+        self.response_latency = 1
+        self.mshrs = 20
+        self.tgts_per_mshr = 12
+        self.writeback_clean = False
+        self.clusivity = "mostly_incl"
 
 class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
 
@@ -52,19 +65,54 @@ class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
         self._l3_assoc = l3_assoc
 
         ## FILL THIS IN
-
+        self.membus = SystemXBar(width=64)
         # For FS mode
         self.membus.badaddr_responder = BadAddr()
         self.membus.default = self.membus.badaddr_responder.pio
 
     ## FILL THIS IN
+    def get_mem_side_port(self) -> Port:
+        return self.membus.mem_side_ports
+    def get_cpu_side_port(self) -> Port:
+        return self.membus.cpu_side_ports
+
+    def incorporate_cache(self, board: AbstractBoard) -> None:
+        board.connect_system_port(self.membus.cpu_side_ports)
+        ports = [tuple[1] for tuple in board.memory.get_mem_ports()]
+        self.l3_bus = L2XBar()
+        clusters_list = self.clusters = [
+            self._create_core_cluster(
+                core, self.l3_bus, board.get_processor().get_isa()
+            )
+            for core in board.get_processor().get_cores()
+        ]
+
+
 
     def _create_core_cluster(self, core, l3_bus, isa):
         """
         Create a core cluster with the given core.
         """
         cluster = SubSystem()
-
+        cluster.l1d_cache = L1DCache(
+            size=self._l1d_size,
+            assoc=self._l1d_assoc,
+        )
+        cluster.l1i_cache = L1ICache(
+            size=self._l1i_size,
+            assoc=self._l1i_assoc
+        )
+        cluster.l2_cache = L2Cache(
+            size=self._l2_size,
+            assoc=self._l2_assoc
+        )
+        cluster_l2_xbar = L2XBar()
+        core.connect_icache(cluster.l1i_cache)
+        core.connect_dcache(cluster.l1d_cache)
+        cluster.l1i_cache.mem_side = cluster_l2_xbar.cpu_side_ports
+        cluster.l1d_cache.mem_side = cluster_l2_xbar.cpu_side_ports
+        cluster.l2_cache.cpu_side = cluster_l2_xbar.cpu_side_ports
+        cluster.l2cache.mem_side = l3_bus.cpu_side_ports
         ## FILL THIS IN
         # Create the L1 and L2 caches, l2xbar, and connect them to the core
 
