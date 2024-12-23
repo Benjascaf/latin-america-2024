@@ -15,35 +15,56 @@ Graph has 1024 nodes and 10496 undirected edges for degree: 10
 Average Time:        0.00009
 """
 
+import argparse
+
 from .components.boards import HWX86Board
 from .components.processors import HWO3CPU
 from .components.cache_hierarchies import  HWMESITwoLevelCacheHierarchy
 from .components.memories import HWDDR4
-from gem5.components.processors.cpu_types import CPUTypes
-from gem5.isas import ISA
-from gem5.resources.resource import obtain_resource
 from gem5.simulate.simulator import Simulator
+#Algorithm 1
+from workloads.array_sum_workload import NaiveArraySumWorkload
+#Algorithm 2
+from workloads.array_sum_workload import ChunkingArraySumWorkload
+#Algorithm 3
+from workloads.array_sum_workload import NoResultRaceArraySumWorkload
+#Algorithm 4
+from workloads.array_sum_workload import ChunkingNoResultRaceArraySumWorkload
+#Algorithm 5
+from workloads.array_sum_workload import NoCacheBlockRaceArraySumWorkload
+#Algorithm 6
+from workloads.array_sum_workload import ChunkingNoBlockRaceArraySumWorkload
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("chosen_workload", type=int)
+parser.add_argument("num_cores", type=int)
+parser.add_argument("xbar_latency", type=int)
+args = parser.parse_args()
+
+
+workload_options = {
+    1: NaiveArraySumWorkload,
+    2: ChunkingArraySumWorkload,
+    3: NoResultRaceArraySumWorkload,
+    4: ChunkingNoResultRaceArraySumWorkload,
+    5: NoCacheBlockRaceArraySumWorkload,
+    6: ChunkingNoBlockRaceArraySumWorkload
+}
 # Here we setup a MESI Two Level Cache Hierarchy.
-cache_hierarchy = MESITwoLevelCacheHierarchy(
-    l1d_size="16kB",
-    l1d_assoc=8,
-    l1i_size="16kB",
-    l1i_assoc=8,
-    l2_size="256kB",
-    l2_assoc=16,
-    num_l2_banks=1,
+cache_hierarchy = HWMESITwoLevelCacheHierarchy(
+    xbar_latency=args.xbar_latency
 )
 
 # Setup the system memory.
-memory = SingleChannelDDR4_2400()
+memory = HWDDR4()
 
 # Create a processor that runs the Arm ISA, has 1 cores and uses a simple
 # timing-based CPU model.
-processor = SimpleProcessor(cpu_type=CPUTypes.TIMING, isa=ISA.ARM, num_cores=1)
+processor = HWO3CPU(num_cores=args.num_cores)
 
 # Create a simple board with the processor, memory and cache hierarchy.
-board = SimpleBoard(
+board = HWX86Board(
     clk_freq="3GHz",
     processor=processor,
     memory=memory,
@@ -51,7 +72,7 @@ board = SimpleBoard(
 )
 
 # Set the workload to run the ARM NPB LU benchmark with size S.
-board.set_workload(obtain_resource("arm-gapbs-bfs-run"))
+board.set_workload(workload_options[args.chosen_workload](32768, args.num_cores))
 
 # Create a simulator with the board and run it.
 simulator = Simulator(board=board)
