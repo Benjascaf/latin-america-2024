@@ -2,6 +2,8 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <sched.h>
+#include <stdio.h>
 
 #ifdef GEM5
 #include <gem5/m5ops.h>
@@ -47,6 +49,8 @@ void sum_5(int *array, std::atomic<int> *result, size_t length, size_t tid, size
 void sum_6(int *array, std::atomic<int> *result, size_t length, size_t tid, size_t threads)
 {
     size_t chunk_size = (length+threads-1)/threads;
+    int cpu = sched_getcpu();
+    printf("Running on CPU: %d\n", cpu);
     for (int i=tid*chunk_size; i < (tid+1)*chunk_size && i < length; i++) {
         result[tid*16] += array[i];
     }
